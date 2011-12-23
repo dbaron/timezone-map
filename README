@@ -1,0 +1,17 @@
+
+This is a Web-based timezone map user interface whose purpose is to show
+the timezone boundaries (and times inside the boundaries) as they exist
+at a specific point in time (rather than typical maps of timezone
+boundaries that show the timezone lines on the assumption that nobody is
+observing summer time), and to allow the user to choose that specific
+time in various ways.
+
+
+Plans:
+
+overlay on top of google maps terrain tiles?
+
+combine color (red == 12 or 6, orange = 1 or 7, etc.) and light/dark
+day/night shading, with labels
+
+hatch the half-hour timezones between the colors
