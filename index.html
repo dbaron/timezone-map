@@ -122,14 +122,13 @@ function show_polygon(d, offset, groupobj) {
     };
     groupobj.polygon = tzmap_polygons_to_gmaps_Polygon(
                       tzmap.polygonsFor(groupobj.zones), options);
+    options = null;
+
     var ourTextNode;
     function over() {
-        if (false) { // too slow
-            options.zIndex = 30;
-            options.strokeColor = "#999900";
-            options.strokeOpacity = 1.0;
-            groupobj.polygon.setOptions(options);
-        }
+        groupobj.polygon.setOptions({ strokeColor: "#999900",
+                                      strokeOpacity: 1.0,
+                                      zIndex: 30});
 
         var du = new Date(d.valueOf() + offset * 1000);
 
@@ -149,12 +148,9 @@ function show_polygon(d, offset, groupobj) {
         gZoneTime.appendChild(ourTextNode);
     }
     function out() {
-        if (false) { // too slow
-            options.zIndex = 20;
-            options.strokeColor = "black";
-            options.strokeOpacity = 0.5;
-            groupobj.polygon.setOptions(options);
-        }
+        groupobj.polygon.setOptions({ strokeColor: "black",
+                                      strokeOpacity: 0.5,
+                                      zIndex: 20});
         gZoneTime.removeChild(ourTextNode);
         ourTextNode = null;
     }
