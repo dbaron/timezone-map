@@ -5,12 +5,15 @@
 <script src="tzmap.js/tzmap.js"></script>
 <script>
 function tzmap_loaded() {
+    document.getElementById("loadingtext").firstChild.data = "";
     show_polygons_for(new Date());
 }
 function tzmap_failed() {
-    alert("map data failed to load");
+    document.getElementById("loadingtext").firstChild.data = "Loading timezone data failed.";
 }
-tzmap.loadData("tzmap.js/", tzmap_loaded, tzmap_failed);
+document.addEventListener("DOMContentLoaded", function(event) {
+    tzmap.loadData("tzmap.js/", tzmap_loaded, tzmap_failed);
+}, false);
 </script>
 <script src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
@@ -174,5 +177,5 @@ body { display: table; border-spacing: 0 }
 #ui, #mapcontainer { display: table-row; }
 #mapcontainer, #map { height: 100% }
 </style>
-<div id="ui">Present time.  <span id="zonetime"></span></div>
+<div id="ui">Present time.  <span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span></div>
 <div id="mapcontainer"><div id="map"></div></div>
