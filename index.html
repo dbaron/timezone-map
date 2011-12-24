@@ -131,6 +131,7 @@ function show_polygon(d, offset, groupobj) {
     function over() {
         groupobj.polygon.setOptions({ strokeColor: "#999900",
                                       strokeOpacity: 1.0,
+                                      fillColor: "yellow",
                                       zIndex: 30});
 
         var du = new Date(d.valueOf() + offset * 1000);
@@ -153,6 +154,7 @@ function show_polygon(d, offset, groupobj) {
     function out() {
         groupobj.polygon.setOptions({ strokeColor: "black",
                                       strokeOpacity: 0.5,
+                                      fillColor: color,
                                       zIndex: 20});
         gZoneTime.removeChild(ourTextNode);
         ourTextNode = null;
