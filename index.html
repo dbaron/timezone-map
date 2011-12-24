@@ -125,7 +125,7 @@ function display_text_for(offset, d) {
            padmins(minutePart) + ")";
 }
 
-function show_polygon(d, offset, groupobj) {
+function color_for_offset(d, offset) {
     var color;
     if (offset % 3600 == 0) {
         color = gHourColors[(d.getUTCHours() + 24 + (offset / 3600)) % 24];
@@ -133,10 +133,15 @@ function show_polygon(d, offset, groupobj) {
         // FIXME: stripe the adjacent hours, if possible
         color = "#999999";
     }
+    return color;
+}
+
+function show_polygon(d, offset, groupobj) {
+    groupobj.color = color_for_offset(d, offset);
     groupobj.polygon = tzmap_polygons_to_gmaps_Polygon(
                       tzmap.polygonsFor(groupobj.zones), {
         fillOpacity: 0.3,
-        fillColor: color,
+        fillColor: groupobj.color,
         strokeOpacity: 0.5,
         strokeColor: "black",
         strokeWeight: 1,
@@ -145,6 +150,7 @@ function show_polygon(d, offset, groupobj) {
         map: gMap
     });
     groupobj.textNode = document.createTextNode(display_text_for(offset, d));
+    groupobj.hovered = false;
 
     function over() {
         groupobj.polygon.setOptions({ strokeColor: "#999900",
@@ -152,13 +158,15 @@ function show_polygon(d, offset, groupobj) {
                                       fillColor: "yellow",
                                       zIndex: 30});
         gZoneTime.appendChild(groupobj.textNode);
+        groupobj.hovered = true;
     }
     function out() {
         groupobj.polygon.setOptions({ strokeColor: "black",
                                       strokeOpacity: 0.5,
-                                      fillColor: color,
+                                      fillColor: groupobj.color,
                                       zIndex: 20});
         gZoneTime.removeChild(groupobj.textNode);
+        groupobj.hovered = false;
     }
     google.maps.event.addListener(groupobj.polygon, 'mouseover', over);
     google.maps.event.addListener(groupobj.polygon, 'mouseout', out);
@@ -192,7 +200,12 @@ function show_polygons_for(d) {
     var groups = zone_groups_for(d);
     if (gCurrentGroups && groups_match(groups, gCurrentGroups)) {
         for (var offset in gCurrentGroups) {
-            gCurrentGroups[offset].textNode.data = display_text_for(offset, d);
+            var groupobj = gCurrentGroups[offset];
+            groupobj.textNode.data = display_text_for(offset, d);
+            groupobj.color = color_for_offset(d, offset);
+            if (!groupobj.hovered) {
+                groupobj.polygon.setOptions({ fillColor: groupobj.color });
+            }
         }
         return;
     }
