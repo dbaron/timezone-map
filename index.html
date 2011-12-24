@@ -92,7 +92,7 @@ function show_polygons_for(d) {
         var obj = groups[offset];
         var color;
         if (offset % 3600 == 0) {
-            var hour = (d.getUTCHours() + 24 + (offset % 3600)) % 24;
+            var hour = (d.getUTCHours() + 24 + (offset / 3600)) % 24;
             color = gHourColors[hour];
         } else {
             // FIXME: stripe the adjacent hours, if possible
