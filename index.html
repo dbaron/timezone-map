@@ -21,7 +21,7 @@ function dom_load_handler() {
         mapTypeId: google.maps.MapTypeId.TERRAIN,
         center: new google.maps.LatLng(15, 0),
     };
-    var gMap = new google.maps.Map(document.getElementById("map"), mapOptions);
+    gMap = new google.maps.Map(document.getElementById("map"), mapOptions);
 }
 
 /**
