@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<title>live timezone map</title>
+<!-- FIXME: temporary -->
+<script src="../tz.js/output/tz.js"></script>
+<script src="../tzmap.js/output/tzmap.js"></script>
+<script>
+function tzmap_loaded() {
+    // FIXME: write me
+}
+window.tzmap.loadData(tzmap_loaded, null);
+</script>
+<script src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false"></script>
+<script>
+var gMap;
+function dom_load_handler() {
+    var mapOptions = {
+        zoom: 2,
+        mapTypeId: google.maps.MapTypeId.TERRAIN,
+        center: new google.maps.LatLng(15, 0),
+    };
+    var gMap = new google.maps.Map(document.getElementById("map"), mapOptions);
+}
+window.addEventListener("DOMContentLoaded", dom_load_handler);
+</script>
+<style>
+html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+body { display: table; border-spacing: 0 }
+#ui, #map { display: table-row; }
+#map { height: 100% }
+</style>
+<div id="ui">UI Goes here</div>
+<div id="map"></div>
