@@ -1,0 +1,11 @@
+<FilesMatch \.js\.gz$>
+  ForceType text/javascript
+  AddDefaultCharset UTF-8
+  AddEncoding x-gzip gz
+</FilesMatch>
+<FilesMatch \.json\.gz$>
+  ForceType application/json
+  AddDefaultCharset UTF-8
+  AddEncoding x-gzip gz
+</FilesMatch>
+

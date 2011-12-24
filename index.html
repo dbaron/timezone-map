@@ -1,13 +1,16 @@
 <!DOCTYPE HTML>
 <title>live timezone map</title>
 <!-- FIXME: requires builds from separate repositories -->
-<script src="tz.js/tz.js"></script>
+<script src="tz.js/tz.js.gz"></script>
 <script src="tzmap.js/tzmap.js"></script>
 <script>
 function tzmap_loaded() {
-    // FIXME: write me
+    show_polygons_for(new Date());
 }
-window.tzmap.loadData(tzmap_loaded, null);
+function tzmap_failed() {
+    alert("map data failed to load");
+}
+tzmap.loadData("tzmap.js/", tzmap_loaded, tzmap_failed);
 </script>
 <script src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
@@ -20,6 +23,96 @@ function dom_load_handler() {
     };
     var gMap = new google.maps.Map(document.getElementById("map"), mapOptions);
 }
+
+/**
+ * For a given Date object |d|, return an object mapping UTC offsets to
+ * an object with a zones property listing all the time zones with that
+ * UTC offset at the given date.
+ */
+function zone_groups_for(d) {
+    var groups = {};
+    var zones = tz.allZones();
+    for (var zoneIdx in zones) {
+        var zone = zones[zoneIdx];
+        var info = tz.zoneAt(zone, d);
+        if (info.offset in groups) {
+            groups[info.offset].zones.push(zone);
+        } else {
+            groups[info.offset] = { zones: [ zone ] };
+        }
+    }
+    return groups;
+}
+
+function tzmap_polygons_to_gmaps_Polygon(polygons, options) {
+    var topArray = [];
+    for (var polygonIdx in polygons) {
+        var innerArray = [];
+        var polygon = polygons[polygonIdx];
+        for (var pointIdx in polygon) {
+            var pt = polygon[pointIdx];
+            innerArray.push(new google.maps.LatLng(pt[1], pt[0]));
+        }
+        topArray.push(innerArray);
+    }
+    options.paths = topArray;
+    return new google.maps.Polygon(options);
+}
+
+var gHourColors = [
+    "hsl(0, 75%, 25%)",
+    "hsl(30, 75%, 25%)",
+    "hsl(60, 75%, 25%)",
+    "hsl(120, 75%, 25%)",
+    "hsl(240, 70%, 30%)",
+    "hsl(300, 65%, 35%)",
+    "hsl(0, 60%, 40%)",
+    "hsl(30, 55%, 45%)",
+    "hsl(60, 50%, 50%)",
+    "hsl(120, 50%, 50%)",
+    "hsl(240, 50%, 50%)",
+    "hsl(300, 50%, 50%)",
+    "hsl(0, 50%, 50%)",
+    "hsl(30, 50%, 50%)",
+    "hsl(60, 50%, 50%)",
+    "hsl(120, 50%, 50%)",
+    "hsl(240, 55%, 45%)",
+    "hsl(300, 60%, 40%)",
+    "hsl(0, 65%, 35%)",
+    "hsl(30, 70%, 30%)",
+    "hsl(60, 75%, 25%)",
+    "hsl(120, 75%, 25%)",
+    "hsl(240, 75%, 25%)",
+    "hsl(300, 75%, 25%)"
+];
+
+function show_polygons_for(d) {
+    var groups = zone_groups_for(d);
+    for (var offset in groups) {
+        var obj = groups[offset];
+        var color;
+        if (offset % 3600 == 0) {
+            var hour = (d.getUTCHours() + 24 + (offset % 3600)) % 24;
+            color = gHourColors[hour];
+        } else {
+            // FIXME: stripe the adjacent hours, if possible
+            color = "#999999";
+        }
+        var options = {
+            fillOpacity: 0.3,
+            fillColor: color,
+            strokeOpacity: 0.7,
+            strokeColor: color,
+            strokeWeight: 1,
+            zIndex: 20,
+            clickable: false,
+            map: gMap
+        };
+        obj.polygon = tzmap_polygons_to_gmaps_Polygon(
+                          tzmap.polygonsFor(obj.zones), options);
+    }
+}
+
 window.addEventListener("DOMContentLoaded", dom_load_handler);
 </script>
 <style>
