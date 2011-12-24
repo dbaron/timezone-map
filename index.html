@@ -86,6 +86,22 @@ var gHourColors = [
     "hsl(300, 75%, 25%)"
 ];
 
+var gZoneTime;
+
+var gMonthNames = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+];
+
+var gDayNames = [
+    "Sunday", "Monday", "Tuesday", "Wednesday",
+    "Thursday", "Friday", "Saturday"
+];
+
+function padmins(min) {
+    return ((min < 10) ? "0" : "") + min;
+}
+
 function show_polygon(d, offset, groupobj) {
     var color;
     if (offset % 3600 == 0) {
@@ -106,23 +122,48 @@ function show_polygon(d, offset, groupobj) {
     };
     groupobj.polygon = tzmap_polygons_to_gmaps_Polygon(
                       tzmap.polygonsFor(groupobj.zones), options);
+    var ourTextNode;
     function over() {
-        options.zIndex = 30;
-        options.strokeColor = "#999900";
-        options.strokeOpacity = 1.0;
-        groupobj.polygon.setOptions(options);
+        if (false) { // too slow
+            options.zIndex = 30;
+            options.strokeColor = "#999900";
+            options.strokeOpacity = 1.0;
+            groupobj.polygon.setOptions(options);
+        }
+
+        var du = new Date(d.valueOf() + offset * 1000);
+
+        // The UTC offset
+        var minutePart = Math.abs(offset) / 60;
+        var hourPart = Math.floor(minutePart / 60);
+        minutePart -= hourPart * 60;
+
+        var text = gDayNames[du.getUTCDay()] + " (" +
+                   gMonthNames[du.getUTCMonth()] + " " + du.getUTCDate() +
+                   ") at " + du.getUTCHours() + ":" +
+                   padmins(du.getUTCMinutes()) + " (UTC" +
+                   ((offset < 0) ? "-" : "+") + hourPart + ":" +
+                   padmins(minutePart) + ")";
+        ourTextNode = document.createTextNode(text);
+
+        gZoneTime.appendChild(ourTextNode);
     }
     function out() {
-        options.zIndex = 20;
-        options.strokeColor = "black";
-        options.strokeOpacity = 0.5;
-        groupobj.polygon.setOptions(options);
+        if (false) { // too slow
+            options.zIndex = 20;
+            options.strokeColor = "black";
+            options.strokeOpacity = 0.5;
+            groupobj.polygon.setOptions(options);
+        }
+        gZoneTime.removeChild(ourTextNode);
+        ourTextNode = null;
     }
     google.maps.event.addListener(groupobj.polygon, 'mouseover', over);
     google.maps.event.addListener(groupobj.polygon, 'mouseout', out);
 }
 
 function show_polygons_for(d) {
+    gZoneTime = document.getElementById("zonetime");
     var groups = zone_groups_for(d);
     for (var offset in groups) {
         show_polygon(d, offset, groups[offset]);
@@ -137,5 +178,5 @@ body { display: table; border-spacing: 0 }
 #ui, #mapcontainer { display: table-row; }
 #mapcontainer, #map { height: 100% }
 </style>
-<div id="ui">UI Goes here</div>
+<div id="ui">Present time.  <span id="zonetime"></span></div>
 <div id="mapcontainer"><div id="map"></div></div>
