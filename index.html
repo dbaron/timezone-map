@@ -4,9 +4,11 @@
 <script src="tz.js/tz.js.gz"></script>
 <script src="tzmap.js/tzmap.js"></script>
 <script>
+var gMapLoaded = false;
 function tzmap_loaded() {
     document.getElementById("loadingtext").firstChild.data = "";
-    now_timer();
+    gMapLoaded = true;
+    hashchange_listener();
 }
 function tzmap_failed() {
     document.getElementById("loadingtext").firstChild.data = "Loading timezone data failed.";
@@ -21,7 +23,8 @@ var gDefaults = {
     zoom: 2,
     lat: 15,
     lng: 0,
-    mapTypeId: google.maps.MapTypeId.ROADMAP
+    mapTypeId: google.maps.MapTypeId.ROADMAP,
+    time: "now"  // "now" or a number in seconds since the epoch
 };
 function gethash() {
     var hash = {};
@@ -42,9 +45,10 @@ function sethash(json) {
     window.location.hash = escape(JSON.stringify(json));
 }
 
-var gMap, gZoneTime, gNowTimer, gState;
+var gMap, gZoneTime, gTimeDesc, gNowTimer, gState;
 function dom_load_handler() {
     gZoneTime = document.getElementById("zonetime");
+    gTimeDesc = document.getElementById("timedesc").firstChild;
 
     gState = gethash();
     sethash(gState);
@@ -90,6 +94,26 @@ function hashchange_listener() {
     gMap.setZoom(gState.zoom);
     gMap.setCenter(new google.maps.LatLng(gState.lat, gState.lng));
     gMap.setMapTypeId(gState.mapTypeId);
+
+    if (gState.time == "now") {
+        if (gNowTimer === undefined && gMapLoaded) {
+            now_timer();
+        }
+        gTimeDesc.data = "Present time.";
+    } else {
+        if (gNowTimer !== undefined) {
+            clearTimeout(gNowTimer);
+            gNowTimer = undefined;
+        }
+        if (typeof(gState.time) == "number") {
+            if (gMapLoaded) {
+                show_polygons_for(new Date(gState.time * 1000));
+            }
+            // FIXME: better description
+            // FIXME: add support for a time zone this was in reference to
+            gTimeDesc.data = gState.time + " seconds since the epoch.";
+        }
+    }
 }
 
 function now_timer() {
@@ -295,5 +319,5 @@ body { display: table; border-spacing: 0 }
 #ui, #mapcontainer { display: table-row; }
 #mapcontainer, #map { height: 100% }
 </style>
-<div id="ui">Present time.  <span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span></div>
+<div id="ui"><span id="timedesc">Present time.</span>  <span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span></div>
 <div id="mapcontainer"><div id="map"></div></div>
