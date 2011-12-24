@@ -17,8 +17,10 @@ document.addEventListener("DOMContentLoaded", function(event) {
 </script>
 <script src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
-var gMap;
+var gMap, gZoneTime;
 function dom_load_handler() {
+    gZoneTime = document.getElementById("zonetime");
+
     var mapOptions = {
         zoom: 2,
         mapTypeId: google.maps.MapTypeId.TERRAIN,
@@ -43,6 +45,10 @@ function zone_groups_for(d) {
         } else {
             groups[info.offset] = { zones: [ zone ] };
         }
+    }
+    for (var offset in groups) {
+        // Keep the lists sorted so we can compare them stably.
+        groups[offset].zones.sort();
     }
     return groups;
 }
@@ -89,8 +95,6 @@ var gHourColors = [
     "hsl(300, 75%, 25%)"
 ];
 
-var gZoneTime;
-
 var gMonthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
@@ -105,6 +109,22 @@ function padmins(min) {
     return ((min < 10) ? "0" : "") + min;
 }
 
+function display_text_for(offset, d) {
+    var du = new Date(d.valueOf() + offset * 1000);
+
+    // The UTC offset
+    var minutePart = Math.abs(offset) / 60;
+    var hourPart = Math.floor(minutePart / 60);
+    minutePart -= hourPart * 60;
+
+    return gDayNames[du.getUTCDay()] + " (" +
+           gMonthNames[du.getUTCMonth()] + " " + du.getUTCDate() +
+           ") at " + du.getUTCHours() + ":" +
+           padmins(du.getUTCMinutes()) + " (UTC" +
+           ((offset < 0) ? "-" : "+") + hourPart + ":" +
+           padmins(minutePart) + ")";
+}
+
 function show_polygon(d, offset, groupobj) {
     var color;
     if (offset % 3600 == 0) {
@@ -113,7 +133,8 @@ function show_polygon(d, offset, groupobj) {
         // FIXME: stripe the adjacent hours, if possible
         color = "#999999";
     }
-    var options = {
+    groupobj.polygon = tzmap_polygons_to_gmaps_Polygon(
+                      tzmap.polygonsFor(groupobj.zones), {
         fillOpacity: 0.3,
         fillColor: color,
         strokeOpacity: 0.5,
@@ -122,50 +143,63 @@ function show_polygon(d, offset, groupobj) {
         zIndex: 20,
         clickable: true, // needed for mouseout/over
         map: gMap
-    };
-    groupobj.polygon = tzmap_polygons_to_gmaps_Polygon(
-                      tzmap.polygonsFor(groupobj.zones), options);
-    options = null;
+    });
+    groupobj.textNode = document.createTextNode(display_text_for(offset, d));
 
-    var ourTextNode;
     function over() {
         groupobj.polygon.setOptions({ strokeColor: "#999900",
                                       strokeOpacity: 1.0,
                                       fillColor: "yellow",
                                       zIndex: 30});
-
-        var du = new Date(d.valueOf() + offset * 1000);
-
-        // The UTC offset
-        var minutePart = Math.abs(offset) / 60;
-        var hourPart = Math.floor(minutePart / 60);
-        minutePart -= hourPart * 60;
-
-        var text = gDayNames[du.getUTCDay()] + " (" +
-                   gMonthNames[du.getUTCMonth()] + " " + du.getUTCDate() +
-                   ") at " + du.getUTCHours() + ":" +
-                   padmins(du.getUTCMinutes()) + " (UTC" +
-                   ((offset < 0) ? "-" : "+") + hourPart + ":" +
-                   padmins(minutePart) + ")";
-        ourTextNode = document.createTextNode(text);
-
-        gZoneTime.appendChild(ourTextNode);
+        gZoneTime.appendChild(groupobj.textNode);
     }
     function out() {
         groupobj.polygon.setOptions({ strokeColor: "black",
                                       strokeOpacity: 0.5,
                                       fillColor: color,
                                       zIndex: 20});
-        gZoneTime.removeChild(ourTextNode);
-        ourTextNode = null;
+        gZoneTime.removeChild(groupobj.textNode);
     }
     google.maps.event.addListener(groupobj.polygon, 'mouseover', over);
     google.maps.event.addListener(groupobj.polygon, 'mouseout', out);
 }
 
+function remove_polygon(groupobj) {
+    groupobj.polygon.setMap(null);
+    // FIXME: remove listeners?  Note that we want mouseout to fire if
+    // in when removed.
+}
+
+var gCurrentGroups;
+
+function groups_match(a, b) {
+    // Since both sets of groups have the same zones put into them, we
+    // only need to enumerate the offsets of one.  If the sets of
+    // offsets are different, we will catch a zone missing.
+    for (var offset in a) {
+        if (!(offset in b)) {
+            return false;
+        }
+        if (JSON.stringify(a[offset].zones) !=
+            JSON.stringify(b[offset].zones)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 function show_polygons_for(d) {
-    gZoneTime = document.getElementById("zonetime");
     var groups = zone_groups_for(d);
+    if (gCurrentGroups && groups_match(groups, gCurrentGroups)) {
+        for (var offset in gCurrentGroups) {
+            gCurrentGroups[offset].textNode.data = display_text_for(offset, d);
+        }
+        return;
+    }
+    for (var offset in gCurrentGroups) {
+        remove_polygon(gCurrentGroups[offset]);
+    }
+    gCurrentGroups = groups;
     for (var offset in groups) {
         show_polygon(d, offset, groups[offset]);
     }
