@@ -86,30 +86,46 @@ var gHourColors = [
     "hsl(300, 75%, 25%)"
 ];
 
+function show_polygon(d, offset, groupobj) {
+    var color;
+    if (offset % 3600 == 0) {
+        color = gHourColors[(d.getUTCHours() + 24 + (offset / 3600)) % 24];
+    } else {
+        // FIXME: stripe the adjacent hours, if possible
+        color = "#999999";
+    }
+    var options = {
+        fillOpacity: 0.3,
+        fillColor: color,
+        strokeOpacity: 0.5,
+        strokeColor: "black",
+        strokeWeight: 1,
+        zIndex: 20,
+        clickable: true, // needed for mouseout/over
+        map: gMap
+    };
+    groupobj.polygon = tzmap_polygons_to_gmaps_Polygon(
+                      tzmap.polygonsFor(groupobj.zones), options);
+    function over() {
+        options.zIndex = 30;
+        options.strokeColor = "#999900";
+        options.strokeOpacity = 1.0;
+        groupobj.polygon.setOptions(options);
+    }
+    function out() {
+        options.zIndex = 20;
+        options.strokeColor = "black";
+        options.strokeOpacity = 0.5;
+        groupobj.polygon.setOptions(options);
+    }
+    google.maps.event.addListener(groupobj.polygon, 'mouseover', over);
+    google.maps.event.addListener(groupobj.polygon, 'mouseout', out);
+}
+
 function show_polygons_for(d) {
     var groups = zone_groups_for(d);
     for (var offset in groups) {
-        var obj = groups[offset];
-        var color;
-        if (offset % 3600 == 0) {
-            var hour = (d.getUTCHours() + 24 + (offset / 3600)) % 24;
-            color = gHourColors[hour];
-        } else {
-            // FIXME: stripe the adjacent hours, if possible
-            color = "#999999";
-        }
-        var options = {
-            fillOpacity: 0.3,
-            fillColor: color,
-            strokeOpacity: 0.5,
-            strokeColor: "black",
-            strokeWeight: 1,
-            zIndex: 20,
-            clickable: false,
-            map: gMap
-        };
-        obj.polygon = tzmap_polygons_to_gmaps_Polygon(
-                          tzmap.polygonsFor(obj.zones), options);
+        show_polygon(d, offset, groups[offset]);
     }
 }
 
