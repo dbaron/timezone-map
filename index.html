@@ -6,7 +6,7 @@
 <script>
 function tzmap_loaded() {
     document.getElementById("loadingtext").firstChild.data = "";
-    show_polygons_for(new Date());
+    now_timer();
 }
 function tzmap_failed() {
     document.getElementById("loadingtext").firstChild.data = "Loading timezone data failed.";
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 </script>
 <script src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false"></script>
 <script>
-var gMap, gZoneTime;
+var gMap, gZoneTime, gNowTimer;
 function dom_load_handler() {
     gZoneTime = document.getElementById("zonetime");
 
@@ -27,6 +27,12 @@ function dom_load_handler() {
         center: new google.maps.LatLng(15, 0),
     };
     gMap = new google.maps.Map(document.getElementById("map"), mapOptions);
+}
+
+function now_timer() {
+    var d = new Date();
+    gNowTimer = setTimeout(now_timer, (60 - d.getUTCSeconds()) * 1000);
+    show_polygons_for(d);
 }
 
 /**
