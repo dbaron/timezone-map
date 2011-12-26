@@ -49,6 +49,7 @@ var gMap, gZoneTime, gTimeDesc, gNowTimer, gState;
 function dom_load_handler() {
     gZoneTime = document.getElementById("zonetime");
     gTimeDesc = document.getElementById("timedesc").firstChild;
+    gTimeChooser = document.getElementById("timechooser");
 
     gState = gethash();
     sethash(gState);
@@ -70,6 +71,28 @@ function dom_load_handler() {
     hashchange_listener();
 
     window.addEventListener("hashchange", hashchange_listener, false);
+
+    document.getElementById("dropdown").addEventListener("click",
+        function(event) {
+            if (event.button != 0 || event.detail != 1)
+                return;
+            event.stopPropagation();
+            toggle_chooser_dropdown();
+        }, false);
+    gTimeChooser.addEventListener("click",
+        function(event) {
+            if (event.detail != 1)
+                return;
+            event.stopPropagation();
+        }, false);
+    document.body.addEventListener("click",
+        function(event) {
+            if (event.detail != 1)
+                return;
+            if (gDropdownOpen) {
+                toggle_chooser_dropdown();
+            }
+        }, false);
 }
 
 function center_changed_listener() {
@@ -312,12 +335,44 @@ function show_polygons_for(d) {
 }
 
 window.addEventListener("DOMContentLoaded", dom_load_handler);
+
+var gTimeChooser;
+var gDropdownOpen = false;
+function toggle_chooser_dropdown() {
+    gTimeChooser.setAttribute("class", gDropdownOpen ? "closed" : "open");
+    gDropdownOpen = !gDropdownOpen;
+}
 </script>
 <style>
 html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
 body { display: table; border-spacing: 0 }
 #ui, #mapcontainer { display: table-row; }
 #mapcontainer, #map { height: 100% }
+
+#map { position: relative; z-index: 1 }
+#chooser-container { position: relative; z-index: 2 }
+
+#timechooser { position: relative; display: inline-block; padding: 2px; background: blue; color: white }
+#chooser-container-outer { position: absolute; height: 0; bottom: 0; left: 0; }
+#timechooser.closed > #chooser-container-outer { display: none }
+#chooser-container { display: block; width: 15em; background: white; color: blue }
+#dropdown { border: none; padding: 0; margin: 0; background: transparent; color: inherit; }
 </style>
-<div id="ui"><span id="timedesc">Present time.</span>  <span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span></div>
+<div id="ui">
+  <span id="timechooser" class="closed">
+    <span id="timedesc">Present time.</span>
+    <button id="dropdown">[v]</button>
+
+    <span id="chooser-container-outer">
+      <span id="chooser-container">
+        <pre style="margin:0">
+        - Present time
+        - Time YYYY MM DD HH MM 
+           - in UTC
+           - at Location
+        </pre>
+      </span>
+    </span>
+  </span>
+<span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span></div>
 <div id="mapcontainer"><div id="map"></div></div>
