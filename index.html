@@ -355,24 +355,29 @@ body { display: table; border-spacing: 0 }
 #timechooser { position: relative; display: inline-block; padding: 2px; background: blue; color: white }
 #chooser-container-outer { position: absolute; height: 0; bottom: 0; left: 0; }
 #timechooser.closed > #chooser-container-outer { display: none }
-#chooser-container { display: block; width: 15em; background: white; color: blue }
+#chooser-container { width: 25em; background: white; color: blue }
 #dropdown { border: none; padding: 0; margin: 0; background: transparent; color: inherit; }
+#chooser-container ul, #chooser-container li { list-style-type: none }
 </style>
 <div id="ui">
-  <span id="timechooser" class="closed">
+  <div id="timechooser" class="closed">
     <span id="timedesc">Present time.</span>
     <button id="dropdown">[v]</button>
 
-    <span id="chooser-container-outer">
-      <span id="chooser-container">
-        <pre style="margin:0">
-        - Present time
-        - Time YYYY MM DD HH MM 
-           - in UTC
-           - at Location
-        </pre>
-      </span>
-    </span>
-  </span>
+    <div id="chooser-container-outer">
+      <div id="chooser-container">
+        <ul>
+          <li><label for="present"><input type="radio" name="time" value="present" id="present">Present time</label></li>
+          <li><label for="specific"><input type="radio" name="time" value="specific" id="specific">Specific time</label>:
+            <input type="text" size="4" name="year" placeholder="YYYY">-<input type="text" size="2" name="month" placeholder="MM">-<input type="text" size="2" name="date" placeholder="DD">
+            <ul>
+              <li><label for="utc"><input type="radio" name="zone" value="utc" id="utc">UTC</label></li>
+              <li><label for="byplace"><input type="radio" name="zone" value="byplace" id="byplace">At Location (FIXME: add location selector)</label></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 <span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span></div>
 <div id="mapcontainer"><div id="map"></div></div>
