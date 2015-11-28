@@ -8,4 +8,11 @@
   AddDefaultCharset UTF-8
   AddEncoding x-gzip gz
 </FilesMatch>
+<FilesMatch \.data$>
+  ForceType application/octet-stream
+</FilesMatch>
+<FilesMatch \.data\.gz$>
+  ForceType application/octet-stream
+  AddEncoding x-gzip gz
+</FilesMatch>
 
