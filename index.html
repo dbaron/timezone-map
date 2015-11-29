@@ -242,11 +242,29 @@ function display_text_for(offset, d) {
 
 function color_for_offset(d, offset) {
     var color;
+    var hour = (d.getUTCHours() + 24 + Math.floor(offset / 3600)) % 24;
     if (offset % 3600 == 0) {
-        color = gHourColors[(d.getUTCHours() + 24 + (offset / 3600)) % 24];
+        color = gHourColors[hour];
     } else {
-        // FIXME: stripe the adjacent hours, if possible
-        color = "#999999";
+        var c1 = gHourColors[hour];
+        var c2 = gHourColors[(hour + 1) % 24];
+        var portion = ((offset / 3600) + 24) % 1;
+        // SVG doesn't support CSS gradients in Gecko or Chromium yet.  See
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=1013889 .
+        // color = "repeating-linear-gradient(135deg, " + c2 + " 0px, " + c2 + " " + (portion * 16) + "px, " + c1 + " " + (portion * 16) + "px, " + c1 + " 16px)";
+        var id="stripe-" + offset;
+        if (!document.getElementById(id)) {
+            var elem = document.getElementById("stripe-template").cloneNode(true);
+            elem.setAttribute("id", id);
+            elem.childNodes[0].setAttribute("stop-color", c2);
+            elem.childNodes[1].setAttribute("stop-color", c2);
+            elem.childNodes[2].setAttribute("stop-color", c1);
+            elem.childNodes[3].setAttribute("stop-color", c1);
+            elem.childNodes[1].setAttribute("offset", portion);
+            elem.childNodes[2].setAttribute("offset", portion);
+            document.getElementById("stripes").appendChild(elem);
+        }
+        color = "url(#" + id + ")";
     }
     return color;
 }
@@ -303,6 +321,11 @@ function groups_match(a, b) {
 }
 
 function show_polygons_for(d) {
+    var stripes_holder = document.getElementById("stripes");
+    while (stripes_holder.lastChild) {
+        stripes_holder.removeChild(stripes_holder.lastChild);
+    }
+
     var groups = zone_groups_for(d);
     if (gCurrentGroups && groups_match(groups, gCurrentGroups)) {
         for (var offset in gCurrentGroups) {
@@ -350,6 +373,14 @@ body { display: table; border-spacing: 0 }
 #chooser-container li > ul { padding-left: 2em }
 #github { position: absolute; top: 0; right: 0 }
 </style>
+<svg style="display:block; height: 0">
+  <defs>
+    <!-- lack of whitespace here is important, since we index with element.childNodes -->
+    <linearGradient id="stripe-template" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="10" y2="10" spreadMethod="repeat"><stop offset="0"></stop><stop offset="0.5"></stop><stop offset="0.5"></stop><stop offset="1"></stop></linearGradient>
+  </defs>
+  <defs id="stripes">
+  </defs>
+</svg>
 <div id="ui">
   <div id="timechooser" class="closed">
     <span id="timedesc">Present time.</span>
