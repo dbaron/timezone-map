@@ -153,14 +153,21 @@ function now_timer() {
  */
 function zone_groups_for(d) {
     var groups = {};
-    var zones = tz.allZones();
+    var zones = tzmap.allZones();
     for (var zoneIdx in zones) {
-        var zone = zones[zoneIdx];
-        var info = tz.zoneAt(zone, d);
+        var tzmapZone = zones[zoneIdx];
+        var tzZone = tz.canonicalName(tzmapZone);
+        if (!tzZone) {
+            if (tzmapZone != "uninhabited") {
+                console.log("Bad zone name " + tzmapZone + " in tzmap database.");
+            }
+            continue;
+        }
+        var info = tz.zoneAt(tzZone, d);
         if (info.offset in groups) {
-            groups[info.offset].zones.push(zone);
+            groups[info.offset].zones.push(tzmapZone);
         } else {
-            groups[info.offset] = { zones: [ zone ] };
+            groups[info.offset] = { zones: [ tzmapZone ] };
         }
     }
     for (var offset in groups) {
