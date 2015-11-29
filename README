@@ -31,3 +31,11 @@ Build instructions:
    index.html from this repository
    tz.js/ from the output/ directory from building tz.js
    tzmap.js/ from the output/ directory from building tzmap.js
+
+   I do this by using:
+     ln -s ../tz.js/output tz.js
+     ln -s ../tzmap.js/output tzmap.js
+   and then running an rsync command that includes the options:
+     --filter=". ./rsync-filter" -avzL --delete-delay . [DESTINATION]/
+   Be sure to test rsync with -n before doing anything that deletes lots
+   of files; the command above deletes everything in [DESTINATION] !

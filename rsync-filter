@@ -1,0 +1,11 @@
+H .*.swp
+H /.git/
+H /.gitignore
+H /COPYING
+H /README
+H /rsync-filter
+H /tzmap.js/world-map.json
+H /tzmap.js/world-map.data
+H /tzmap.js/test-*
+H /tz.js/tz.js
+H /tz.js/test-*
