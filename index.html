@@ -18,13 +18,14 @@ document.addEventListener("DOMContentLoaded", function(event) {
     tzmap.loadData("tzmap.js/", tzmap_loaded, tzmap_failed);
 }, false);
 </script>
-<script src="http://maps.googleapis.com/maps/api/js?v=3.6&amp;sensor=false"></script>
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css">
+<script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+<script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
 <script>
 var gDefaults = {
     zoom: 2,
     lat: 15,
     lng: 0,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
     time: "now"  // "now" or a number in seconds since the epoch
 };
 function gethash() {
@@ -46,7 +47,7 @@ function sethash(json) {
     window.location.hash = escape(JSON.stringify(json));
 }
 
-var gMap, gZoneTime, gTimeDesc, gNowTimer, gState;
+var gMap, gZonesLayer, gZoneTime, gTimeDesc, gNowTimer, gState;
 function dom_load_handler() {
     gZoneTime = document.getElementById("zonetime");
     gTimeDesc = document.getElementById("timedesc").firstChild;
@@ -55,19 +56,16 @@ function dom_load_handler() {
     gState = gethash();
     sethash(gState);
 
-    var mapOptions = {
-        zoom: gState.zoom,
-        mapTypeId: gState.mapTypeId,
-        center: new google.maps.LatLng(gState.lat, gState.lng),
-    };
-    gMap = new google.maps.Map(document.getElementById("map"), mapOptions);
+    // FIXME: Use fitWorld by default.
+    gMap = L.map("map").setView([gState.lat, gState.lng], gState.zoom);
+    gZonesLayer = L.layerGroup();
+    gZonesLayer.addTo(gMap);
 
-    google.maps.event.addListener(gMap, 'center_changed',
-                                  center_changed_listener);
-    google.maps.event.addListener(gMap, 'zoom_changed',
-                                  zoom_changed_listener);
-    google.maps.event.addListener(gMap, 'maptypeid_changed',
-                                  maptypeid_changed_listener);
+    // See http://maps.stamen.com/
+    gMap.addLayer(new L.StamenTileLayer("toner-lite"));
+
+    gMap.addEventListener("moveend", center_changed_listener);
+    gMap.addEventListener("zoomend", zoom_changed_listener);
 
     hashchange_listener();
 
@@ -98,8 +96,8 @@ function dom_load_handler() {
 
 function center_changed_listener() {
     var ctr = gMap.getCenter();
-    gState.lat = ctr.lat();
-    gState.lng = ctr.lng();
+    gState.lat = ctr.lat;
+    gState.lng = ctr.lng;
     sethash(gState);
 }
 
@@ -108,16 +106,10 @@ function zoom_changed_listener() {
     sethash(gState);
 }
 
-function maptypeid_changed_listener() {
-    gState.mapTypeId = gMap.getMapTypeId();
-    sethash(gState);
-}
-
 function hashchange_listener() {
     gState = gethash();
     gMap.setZoom(gState.zoom);
-    gMap.setCenter(new google.maps.LatLng(gState.lat, gState.lng));
-    gMap.setMapTypeId(gState.mapTypeId);
+    gMap.panTo(L.latLng(gState.lat, gState.lng));
 
     if (gState.time == "now") {
         if (gNowTimer === undefined && gMapLoaded) {
@@ -177,19 +169,18 @@ function zone_groups_for(d) {
     return groups;
 }
 
-function tzmap_polygons_to_gmaps_Polygon(polygons, options) {
+function tzmap_polygons_to_leaflet_MultiPolygon(polygons, options) {
     var topArray = [];
     for (var polygonIdx in polygons) {
         var innerArray = [];
         var polygon = polygons[polygonIdx];
         for (var pointIdx in polygon) {
             var pt = polygon[pointIdx];
-            innerArray.push(new google.maps.LatLng(pt[1], pt[0]));
+            innerArray.push(L.latLng(pt[1], pt[0]));
         }
         topArray.push(innerArray);
     }
-    options.paths = topArray;
-    return new google.maps.Polygon(options);
+    return L.multiPolygon(topArray, options);
 }
 
 var gHourColors = [
@@ -262,44 +253,35 @@ function color_for_offset(d, offset) {
 
 function show_polygon(d, offset, groupobj) {
     groupobj.color = color_for_offset(d, offset);
-    groupobj.polygon = tzmap_polygons_to_gmaps_Polygon(
-                      tzmap.polygonsFor(groupobj.zones), {
+    groupobj.polygon = tzmap_polygons_to_leaflet_MultiPolygon(
+                         tzmap.polygonsFor(groupobj.zones), {
         fillOpacity: 0.3,
         fillColor: groupobj.color,
-        strokeOpacity: 0.5,
-        strokeColor: "black",
-        strokeWeight: 1,
-        zIndex: 20,
+        opacity: 0.5,
+        color: "black",
+        weight: 1,
         clickable: true, // needed for mouseout/over
-        map: gMap
     });
+    groupobj.polygon.addTo(gZonesLayer);
     groupobj.textNode = document.createTextNode(display_text_for(offset, d));
     groupobj.hovered = false;
 
     function over() {
-        groupobj.polygon.setOptions({ strokeColor: "#999900",
-                                      strokeOpacity: 1.0,
-                                      fillColor: "yellow",
-                                      zIndex: 30});
+        groupobj.polygon.setStyle({ color: "#999900",
+                                    opacity: 1.0,
+                                    fillColor: "yellow"});
         gZoneTime.appendChild(groupobj.textNode);
         groupobj.hovered = true;
     }
     function out() {
-        groupobj.polygon.setOptions({ strokeColor: "black",
-                                      strokeOpacity: 0.5,
-                                      fillColor: groupobj.color,
-                                      zIndex: 20});
+        groupobj.polygon.setStyle({ color: "black",
+                                    opacity: 0.5,
+                                    fillColor: groupobj.color});
         gZoneTime.removeChild(groupobj.textNode);
         groupobj.hovered = false;
     }
-    google.maps.event.addListener(groupobj.polygon, 'mouseover', over);
-    google.maps.event.addListener(groupobj.polygon, 'mouseout', out);
-}
-
-function remove_polygon(groupobj) {
-    groupobj.polygon.setMap(null);
-    // FIXME: remove listeners?  Note that we want mouseout to fire if
-    // in when removed.
+    groupobj.polygon.addEventListener('mouseover', over);
+    groupobj.polygon.addEventListener('mouseout', out);
 }
 
 var gCurrentGroups;
@@ -328,14 +310,12 @@ function show_polygons_for(d) {
             groupobj.textNode.data = display_text_for(offset, d);
             groupobj.color = color_for_offset(d, offset);
             if (!groupobj.hovered) {
-                groupobj.polygon.setOptions({ fillColor: groupobj.color });
+                groupobj.polygon.setStyle({ fillColor: groupobj.color });
             }
         }
         return;
     }
-    for (var offset in gCurrentGroups) {
-        remove_polygon(gCurrentGroups[offset]);
-    }
+    gZonesLayer.clearLayers();
     gCurrentGroups = groups;
     for (var offset in groups) {
         show_polygon(d, offset, groups[offset]);
