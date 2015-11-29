@@ -349,6 +349,7 @@ html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
 body { display: table; border-spacing: 0 }
 #ui, #mapcontainer { display: table-row; }
 #mapcontainer, #map { height: 100% }
+#ui { position: relative }
 
 #map { position: relative; z-index: 1 }
 #chooser-container { position: relative; z-index: 2 }
@@ -360,6 +361,7 @@ body { display: table; border-spacing: 0 }
 #dropdown { border: none; padding: 0; margin: 0; background: transparent; color: inherit; }
 #chooser-container ul, #chooser-container li { list-style-type: none; margin: 0; padding: 0 }
 #chooser-container li > ul { padding-left: 2em }
+#github { position: absolute; top: 0; right: 0 }
 </style>
 <div id="ui">
   <div id="timechooser" class="closed">
@@ -381,5 +383,7 @@ body { display: table; border-spacing: 0 }
       </div>
     </div>
   </div>
-<span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span></div>
+  <span id="loadingtext">Loading timezone data...</span><span id="zonetime"></span>
+  <div id="github"><a href="https://github.com/dbaron/timezone-map/">source on GitHub</a></div>
+  </div>
 <div id="mapcontainer"><div id="map"></div></div>
