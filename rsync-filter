@@ -3,6 +3,9 @@ H /.git/
 H /.gitignore
 H /COPYING
 H /README
+H /INSTALL-local
+H /INSTALL-sonic
+H /INSTALL-sonic-leaflet
 H /rsync-filter
 H /tzmap.js/world-map.json
 H /tzmap.js/world-map.data
