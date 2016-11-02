@@ -20,7 +20,37 @@ document.addEventListener("DOMContentLoaded", function(event) {
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.7/dist/leaflet.css" integrity="sha384-99ZJFcuBCh9c/V/+8YwDX/TUGG8JWMG+gKFJWzk0BZP3IoDMN+pLGd3/H0yjg4oa" crossorigin="anonymous">
 <script src="https://unpkg.com/leaflet@0.7.7/dist/leaflet.js" integrity="sha384-Lh7SNUss9JoImCvc96eCUnLX3HvY4kb0UZCWZbYWvceJ+o5CJeOJqqNoheaGkNHT" crossorigin="anonymous"></script>
-<script type="text/javascript" src="https://stamen-maps.a.ssl.fastly.net/js/tile.stamen.js?v1.3.0"></script>
+<script>
+// Use Stamen toner-lite tiles over HTTPS.  Stamen doesn't provide a
+// script for this, since 
+// https://stamen-maps.a.ssl.fastly.net/js/tile.stamen.js?v1.3.0
+// loads the tiles over http.  But it's pretty simple, based on that
+// and http://maps.stamen.com/#usage-ssl
+L.StamenSSLTileLayer = L.TileLayer.extend({
+    initialize: function(name, options) {
+        L.TileLayer.prototype.initialize.call(this,
+            [ "https://stamen-tiles-{s}.a.ssl.fastly.net/", name, "/{z}/{x}/{y}.png" ].join(""),
+            L.Util.extend({}, options, {
+                // NOTE: These options are hard-coded to be the toner values!
+                minZoom: 0,
+                maxZoom: 20,
+                subdomains: ["a", "b", "c", "d" ],
+                scheme: "xyz",
+                attribution:  [
+                    'Map tiles by <a href="http://stamen.com/">Stamen Design</a>, ',
+                    'under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. ',
+                    'Data by <a href="http://openstreetmap.org/">OpenStreetMap</a>, ',
+                    'under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.'
+                ].join(""),
+                sa_id: name
+            }));
+    }
+});
+
+L.stamenSSLTileLayer = function(name, options) {
+    return new L.StamenSSLTileLayer(name, options);
+}
+</script>
 <script>
 var gDefaults = {
     zoom: 2,
@@ -62,7 +92,7 @@ function dom_load_handler() {
     gZonesLayer.addTo(gMap);
 
     // See http://maps.stamen.com/
-    gMap.addLayer(new L.StamenTileLayer("toner-lite"));
+    gMap.addLayer(L.stamenSSLTileLayer("toner-lite"));
 
     gMap.addEventListener("moveend", center_changed_listener);
     gMap.addEventListener("zoomend", zoom_changed_listener);
