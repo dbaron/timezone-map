@@ -18,8 +18,8 @@ document.addEventListener("DOMContentLoaded", function(event) {
     tzmap.loadData("tzmap.js/", tzmap_loaded, tzmap_failed);
 }, false);
 </script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@0.7.7/dist/leaflet.css" integrity="sha384-99ZJFcuBCh9c/V/+8YwDX/TUGG8JWMG+gKFJWzk0BZP3IoDMN+pLGd3/H0yjg4oa" crossorigin="anonymous">
-<script src="https://unpkg.com/leaflet@0.7.7/dist/leaflet.js" integrity="sha384-Lh7SNUss9JoImCvc96eCUnLX3HvY4kb0UZCWZbYWvceJ+o5CJeOJqqNoheaGkNHT" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ==" crossorigin=" anonymous">
+<script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js" integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew==" crossorigin="anonymous"></script>
 <script>
 // Use Stamen toner-lite tiles over HTTPS.  Stamen doesn't provide a
 // script for this, since 
@@ -199,7 +199,7 @@ function zone_groups_for(d) {
     return groups;
 }
 
-function tzmap_polygons_to_leaflet_MultiPolygon(polygons, options) {
+function tzmap_polygons_to_leaflet_polygon(polygons, options) {
     var topArray = [];
     for (var polygonIdx in polygons) {
         var innerArray = [];
@@ -210,7 +210,7 @@ function tzmap_polygons_to_leaflet_MultiPolygon(polygons, options) {
         }
         topArray.push(innerArray);
     }
-    return L.multiPolygon(topArray, options);
+    return L.polygon(topArray, options);
 }
 
 var gHourColors = [
@@ -301,7 +301,7 @@ function color_for_offset(d, offset) {
 
 function show_polygon(d, offset, groupobj) {
     groupobj.color = color_for_offset(d, offset);
-    groupobj.polygon = tzmap_polygons_to_leaflet_MultiPolygon(
+    groupobj.polygon = tzmap_polygons_to_leaflet_polygon(
                          tzmap.polygonsFor(groupobj.zones), {
         fillOpacity: 0.3,
         fillColor: groupobj.color,
